@@ -2,17 +2,52 @@ type Movie {
   id: ID!
   title: String!
   url: String!
+  releaseDate: String!
+  createdAt: String!
+  updatedAt: String!
 }
 
-type Query {
-  movies: [Movie!]!
+type Actor {
+  id: ID!
+  name: String!
+  createdAt: String!
+  updatedAt: String!
 }
 
 input NewMovie {
   title: String!
   url: String!
+  releaseDate: String!
+}
+
+input UpdateMovie {
+  id: ID!
+  title: String
+  url: String
+  releaseDate: String
+}
+
+input NewActor {
+  name: String!
+}
+
+input UpdateActor {
+  id: ID!
+  name: String
+}
+
+type Query {
+  movies: [Movie!]!
+  movie(id: ID!): Movie
+  actors: [Actor!]!
+  actor(id: ID!): Actor
 }
 
 type Mutation {
   createMovie(input: NewMovie!): Movie!
+  createActor(input: NewActor!): Actor!
+  updateMovie(input: UpdateMovie!): Movie!
+  updateActor(input: UpdateActor!): Actor!
+  deleteMovie(id: ID!): Boolean!
+  deleteActor(id: ID!): Boolean!
 }

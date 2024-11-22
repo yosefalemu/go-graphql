@@ -8,35 +8,100 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/yosefalemu/go-graphql.git/graph/model"
 )
 
 // CreateMovie is the resolver for the createMovie field.
 func (r *mutationResolver) CreateMovie(ctx context.Context, input model.NewMovie) (*model.Movie, error) {
-	movie := &model.Movie{
-		Title: input.Title,
-		URL:   input.URL,
-	}
-	//i want to return the movie that was created
-	err := r.DB.Create(&movie).Error
-	if err != nil {
-		return nil, fmt.Errorf("error creating movie: %v", err)
+	movieID := uuid.New()
+	newMovie := model.Movie{
+		ID:          movieID.String(),
+		Title:       input.Title,
+		URL:         input.URL,
+		ReleaseDate: input.ReleaseDate,
 	}
 
-	return movie, nil
+	result := r.DB.Create(&newMovie)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &newMovie, nil
+}
+
+// CreateActor is the resolver for the createActor field.
+func (r *mutationResolver) CreateActor(ctx context.Context, input model.NewActor) (*model.Actor, error) {
+	actorID := uuid.New()
+	newActor := model.Actor{
+		ID:   actorID.String(),
+		Name: input.Name,
+	}
+
+	result := r.DB.Create(&newActor)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &newActor, nil
+}
+
+// UpdateMovie is the resolver for the updateMovie field.
+func (r *mutationResolver) UpdateMovie(ctx context.Context, input model.UpdateMovie) (*model.Movie, error) {
+	panic(fmt.Errorf("not implemented: UpdateMovie - updateMovie"))
+}
+
+// UpdateActor is the resolver for the updateActor field.
+func (r *mutationResolver) UpdateActor(ctx context.Context, input model.UpdateActor) (*model.Actor, error) {
+	panic(fmt.Errorf("not implemented: UpdateActor - updateActor"))
+}
+
+// DeleteMovie is the resolver for the deleteMovie field.
+func (r *mutationResolver) DeleteMovie(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteMovie - deleteMovie"))
+}
+
+// DeleteActor is the resolver for the deleteActor field.
+func (r *mutationResolver) DeleteActor(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteActor - deleteActor"))
 }
 
 // Movies is the resolver for the movies field.
 func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
 	var movies []*model.Movie
 
-	// Ensure you're passing only the context and not extra attached values
-	err := r.DB.Find(&movies).Error
-	if err != nil {
-		return nil, fmt.Errorf("error fetching movies: %v", err)
+	result := r.DB.Find(&movies)
+
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return movies, nil
+}
+
+// Movie is the resolver for the movie field.
+func (r *queryResolver) Movie(ctx context.Context, id string) (*model.Movie, error) {
+	panic(fmt.Errorf("not implemented: Movie - movie"))
+}
+
+// Actors is the resolver for the actors field.
+func (r *queryResolver) Actors(ctx context.Context) ([]*model.Actor, error) {
+	var actors []*model.Actor
+
+	result := r.DB.Find(&actors)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return actors, nil
+}
+
+// Actor is the resolver for the actor field.
+func (r *queryResolver) Actor(ctx context.Context, id string) (*model.Actor, error) {
+	panic(fmt.Errorf("not implemented: Actor - actor"))
 }
 
 // Mutation returns MutationResolver implementation.
@@ -47,3 +112,20 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *actorResolver) CreatedAt(ctx context.Context, obj *model.Actor) (string, error) {
+	panic(fmt.Errorf("not implemented: CreatedAt - createdAt"))
+}
+func (r *actorResolver) UpdatedAt(ctx context.Context, obj *model.Actor) (string, error) {
+	panic(fmt.Errorf("not implemented: UpdatedAt - updatedAt"))
+}
+func (r *Resolver) Actor() ActorResolver { return &actorResolver{r} }
+type actorResolver struct{ *Resolver }
+*/
