@@ -6,20 +6,31 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/yosefalemu/go-graphql.git/graph/model"
+	"gorm.io/gorm"
 )
 
 // CreateMovie is the resolver for the createMovie field.
 func (r *mutationResolver) CreateMovie(ctx context.Context, input model.NewMovie) (*model.Movie, error) {
 	movieID := uuid.New()
 	newMovie := model.Movie{
-		ID:          movieID.String(),
-		Title:       input.Title,
-		URL:         input.URL,
-		ReleaseDate: input.ReleaseDate,
+		ID:    movieID.String(),
+		Title: input.Title,
+		URL:   input.URL,
+		ReleaseDate: func() *string {
+			if input.ReleaseDate != nil {
+				return input.ReleaseDate
+			}
+			now := time.Now().Format(time.RFC3339)
+			return &now
+		}(),
+		CreatedAt: func(s string) *string { return &s }(time.Now().Format(time.RFC3339)),
+		UpdatedAt: func(s string) *string { return &s }(time.Now().Format(time.RFC3339)),
 	}
 
 	result := r.DB.Create(&newMovie)
@@ -35,8 +46,10 @@ func (r *mutationResolver) CreateMovie(ctx context.Context, input model.NewMovie
 func (r *mutationResolver) CreateActor(ctx context.Context, input model.NewActor) (*model.Actor, error) {
 	actorID := uuid.New()
 	newActor := model.Actor{
-		ID:   actorID.String(),
-		Name: input.Name,
+		ID:        actorID.String(),
+		Name:      input.Name,
+		CreatedAt: func(s string) *string { return &s }(time.Now().Format(time.RFC3339)),
+		UpdatedAt: func(s string) *string { return &s }(time.Now().Format(time.RFC3339)),
 	}
 
 	result := r.DB.Create(&newActor)
@@ -50,40 +63,127 @@ func (r *mutationResolver) CreateActor(ctx context.Context, input model.NewActor
 
 // UpdateMovie is the resolver for the updateMovie field.
 func (r *mutationResolver) UpdateMovie(ctx context.Context, input model.UpdateMovie) (*model.Movie, error) {
-	panic(fmt.Errorf("not implemented: UpdateMovie - updateMovie"))
+	if _, err := uuid.Parse(input.ID); err != nil {
+		return nil, errors.New("invalid uuid")
+	}
+	var movie model.Movie
+	result := r.DB.First(&movie, "id =?", input.ID)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			errFound := fmt.Errorf("movie with id %s not found", input.ID)
+			return nil, errFound
+		}
+		return nil, result.Error
+	}
+	if input.Title != nil {
+		movie.Title = *input.Title
+	}
+	if input.URL != nil {
+		movie.URL = *input.URL
+	}
+	if input.ReleaseDate != nil {
+		movie.ReleaseDate = input.ReleaseDate
+	}
+	movie.UpdatedAt = func(s string) *string { return &s }(time.Now().Format(time.RFC3339))
+	result = r.DB.Save(&movie)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &movie, nil
 }
 
 // UpdateActor is the resolver for the updateActor field.
 func (r *mutationResolver) UpdateActor(ctx context.Context, input model.UpdateActor) (*model.Actor, error) {
-	panic(fmt.Errorf("not implemented: UpdateActor - updateActor"))
+	if _, err := uuid.Parse(input.ID); err != nil {
+		return nil, errors.New("invalid uuid")
+	}
+	var actor model.Actor
+	result := r.DB.First(&actor, "id = ?", input.ID)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			errFound := fmt.Errorf("actor with id %s not found", input.ID)
+			return nil, errFound
+		}
+		return nil, result.Error
+	}
+	if input.Name != nil {
+		actor.Name = *input.Name
+	}
+	actor.UpdatedAt = func(s string) *string { return &s }(time.Now().Format(time.RFC3339))
+	result = r.DB.Save(&actor)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &actor, nil
 }
 
 // DeleteMovie is the resolver for the deleteMovie field.
-func (r *mutationResolver) DeleteMovie(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteMovie - deleteMovie"))
+func (r *mutationResolver) DeleteMovie(ctx context.Context, id string) (*model.Movie, error) {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, errors.New("invalid uuid")
+	}
+	var movie model.Movie
+	result := r.DB.First(&movie, "id = ?", id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			errFound := fmt.Errorf("movie with id %s not found", id)
+			return nil, errFound
+		}
+		return nil, result.Error
+	}
+	result = r.DB.Delete(&movie)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &movie, nil
 }
 
 // DeleteActor is the resolver for the deleteActor field.
-func (r *mutationResolver) DeleteActor(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteActor - deleteActor"))
+func (r *mutationResolver) DeleteActor(ctx context.Context, id string) (*model.Actor, error) {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, errors.New("invalid uuid")
+	}
+	var actor model.Actor
+	result := r.DB.First(&actor, "id = ?", id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			errFound := fmt.Errorf("actor with id %s not found", id)
+			return nil, errFound
+		}
+		return nil, result.Error
+	}
+	result = r.DB.Delete(&actor)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &actor, nil
 }
 
 // Movies is the resolver for the movies field.
 func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
 	var movies []*model.Movie
-
 	result := r.DB.Find(&movies)
-
 	if result.Error != nil {
 		return nil, result.Error
 	}
-
 	return movies, nil
 }
 
 // Movie is the resolver for the movie field.
 func (r *queryResolver) Movie(ctx context.Context, id string) (*model.Movie, error) {
-	panic(fmt.Errorf("not implemented: Movie - movie"))
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, errors.New("invalid uuid")
+	}
+	var movie model.Movie
+	result := r.DB.First(&movie, "id =?", id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			errFound := fmt.Errorf("movie with id %s not found", id)
+			return nil, errFound
+		}
+		return nil, result.Error
+	}
+	return &movie, nil
 }
 
 // Actors is the resolver for the actors field.
@@ -101,7 +201,19 @@ func (r *queryResolver) Actors(ctx context.Context) ([]*model.Actor, error) {
 
 // Actor is the resolver for the actor field.
 func (r *queryResolver) Actor(ctx context.Context, id string) (*model.Actor, error) {
-	panic(fmt.Errorf("not implemented: Actor - actor"))
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, errors.New("inavlid uuid")
+	}
+	var actor model.Actor
+	result := r.DB.First(&actor, "id = ?", id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			errFound := fmt.Errorf("actor with id %s not found", id)
+			return nil, errFound
+		}
+		return nil, result.Error
+	}
+	return &actor, nil
 }
 
 // Mutation returns MutationResolver implementation.
@@ -112,20 +224,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *actorResolver) CreatedAt(ctx context.Context, obj *model.Actor) (string, error) {
-	panic(fmt.Errorf("not implemented: CreatedAt - createdAt"))
-}
-func (r *actorResolver) UpdatedAt(ctx context.Context, obj *model.Actor) (string, error) {
-	panic(fmt.Errorf("not implemented: UpdatedAt - updatedAt"))
-}
-func (r *Resolver) Actor() ActorResolver { return &actorResolver{r} }
-type actorResolver struct{ *Resolver }
-*/

@@ -3,19 +3,19 @@
 package model
 
 type Actor struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	CreatedAt *string `json:"createdAt,omitempty"`
+	UpdatedAt *string `json:"updatedAt,omitempty"`
 }
 
 type Movie struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	URL         string `json:"url"`
-	ReleaseDate string `json:"releaseDate"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID          string  `json:"id"`
+	Title       string  `json:"title"`
+	URL         string  `json:"url"`
+	ReleaseDate *string `json:"releaseDate,omitempty"`
+	CreatedAt   *string `json:"createdAt,omitempty"`
+	UpdatedAt   *string `json:"updatedAt,omitempty"`
 }
 
 type Mutation struct {
@@ -26,9 +26,9 @@ type NewActor struct {
 }
 
 type NewMovie struct {
-	Title       string `json:"title"`
-	URL         string `json:"url"`
-	ReleaseDate string `json:"releaseDate"`
+	Title       string  `json:"title"`
+	URL         string  `json:"url"`
+	ReleaseDate *string `json:"releaseDate,omitempty"`
 }
 
 type Query struct {

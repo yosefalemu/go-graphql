@@ -2,22 +2,22 @@ type Movie {
   id: ID!
   title: String!
   url: String!
-  releaseDate: String!
-  createdAt: String!
-  updatedAt: String!
+  releaseDate: String
+  createdAt: String
+  updatedAt: String
 }
 
 type Actor {
   id: ID!
   name: String!
-  createdAt: String!
-  updatedAt: String!
+  createdAt: String
+  updatedAt: String
 }
 
 input NewMovie {
   title: String!
   url: String!
-  releaseDate: String!
+  releaseDate: String
 }
 
 input UpdateMovie {
@@ -48,6 +48,6 @@ type Mutation {
   createActor(input: NewActor!): Actor!
   updateMovie(input: UpdateMovie!): Movie!
   updateActor(input: UpdateActor!): Actor!
-  deleteMovie(id: ID!): Boolean!
-  deleteActor(id: ID!): Boolean!
+  deleteMovie(id: ID!): Movie!
+  deleteActor(id: ID!): Actor!
 }
